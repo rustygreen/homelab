@@ -417,8 +417,6 @@ def upload_file(file_path: Path, api_key: str, immich_url: str) -> tuple[bool, b
                 'assetData': (file_path.name, f, 'application/octet-stream')
             }
             data = {
-                'deviceAssetId': f"{file_path.name}-{stat.st_mtime}",
-                'deviceId': 'import-watch',
                 'fileCreatedAt': modified_time,
                 'fileModifiedAt': modified_time,
                 'isFavorite': 'false'
@@ -428,7 +426,10 @@ def upload_file(file_path: Path, api_key: str, immich_url: str) -> tuple[bool, b
         
         if response.status_code in (200, 201):
             result = response.json()
-            is_duplicate = result.get('duplicate', False)
+            if 'status' in result:
+                is_duplicate = result.get('status') == 'duplicate'
+            else:
+                is_duplicate = result.get('duplicate', False)
             if is_duplicate:
                 logger.info(f"Duplicate skipped: {file_path.name}")
             else:
